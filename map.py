@@ -122,7 +122,7 @@ def handle_events():
                 load_points("path.json")
             
             if event.key == pygame.K_t:
-                load_points("messy.json")
+                load_telemetry("messy.json")
 
             if event.key == pygame.K_c:
                 points.clear()
