@@ -14,7 +14,6 @@ import math
 
 
 brain=Brain()
-brain.sdcard
 joystick = Controller()
 timer = Timer()
 
@@ -75,126 +74,87 @@ while(True):
 #######################################
 #          Global Variables           #
 #######################################
-xpos = 5
-ypos = 90
+xpos = 100
+ypos = 5
 theta = 0       
 xposT = 0   # total x pos
 yposT = 0   # total Y pos
-L = 12      # look ahead distnce
+L = 8      # look ahead distnce
 O = 13.5    # drivetrain offset (wheel base)
-
-points =[
+points =  [
   {
     "i": 1,
-    "x": 4.0,
-    "y": 88.4
+    "x": 9.4,
+    "y": 101.4
   },
   {
     "i": 2,
-    "x": 6.6,
-    "y": 88.2
+    "x": 11.4,
+    "y": 101.6
   },
   {
     "i": 3,
-    "x": 9.0,
-    "y": 88.4
-  },
-  {
-    "i": 4,
-    "x": 12.0,
-    "y": 89.0
-  },
-  {
-    "i": 5,
-    "x": 13.8,
-    "y": 90.2
-  },
-  {
-    "i": 6,
-    "x": 15.4,
-    "y": 91.8
-  },
-  {
-    "i": 7,
-    "x": 17.4,
-    "y": 94.0
-  },
-  {
-    "i": 8,
-    "x": 18.4,
-    "y": 95.8
-  },
-  {
-    "i": 9,
-    "x": 19.2,
-    "y": 98.2
-  },
-  {
-    "i": 10,
-    "x": 20.2,
-    "y": 101.2
-  },
-  {
-    "i": 11,
-    "x": 22.0,
-    "y": 103.6
-  },
-  {
-    "i": 12,
-    "x": 23.8,
-    "y": 104.6
-  },
-  {
-    "i": 13,
-    "x": 26.8,
-    "y": 106.0
-  },
-  {
-    "i": 14,
-    "x": 29.2,
-    "y": 106.0
-  },
-  {
-    "i": 15,
-    "x": 31.4,
-    "y": 105.2
-  },
-  {
-    "i": 16,
-    "x": 33.2,
-    "y": 104.0
-  },
-  {
-    "i": 17,
-    "x": 35.4,
-    "y": 102.8
-  },
-  {
-    "i": 18,
-    "x": 37.4,
+    "x": 14.0,
     "y": 102.0
   },
   {
-    "i": 19,
-    "x": 40.4,
-    "y": 100.8
+    "i": 4,
+    "x": 16.4,
+    "y": 102.0
   },
   {
-    "i": 20,
-    "x": 45.0,
+    "i": 5,
+    "x": 18.4,
+    "y": 102.0
+  },
+  {
+    "i": 6,
+    "x": 21.2,
+    "y": 102.0
+  },
+  {
+    "i": 7,
+    "x": 24.8,
+    "y": 102.0
+  },
+  {
+    "i": 8,
+    "x": 26.6,
+    "y": 101.0
+  },
+  {
+    "i": 9,
+    "x": 28.2,
+    "y": 99.6
+  },
+  {
+    "i": 10,
+    "x": 29.4,
     "y": 98.0
   },
   {
-    "i": 21,
-    "x": 46.8,
-    "y": 96.0
+    "i": 11,
+    "x": 30.8,
+    "y": 95.6
   },
   {
-    "i": 22,
-    "x": 48.6,
-    "y": 94.8
+    "i": 12,
+    "x": 30.8,
+    "y": 93.4
+  },
+  {
+    "i": 13,
+    "x": 30.6,
+    "y": 91.0
+  },
+  {
+    "i": 14,
+    "x": 30.0,
+    "y": 88.2
   }
 ]
+
+
 
 
 #######################################
@@ -278,188 +238,103 @@ def SaveOdomToSD():
         brain.sdcard.appendfile("odomOverTime.txt", json_bytes)
         wait(100)
 
-
-def find_closest_index(robot_x, robot_y, path, lastPoint):
-    best_i = lastPoint
-    best_dist = float("inf")
-
-    i = -1
-    for p in path:
-        i += 1
-
-        if i < lastPoint:
-            continue
-
-        px = p["x"]
-        py = p["y"]
-
-        d = (px - robot_x)**2 + (py - robot_y)**2
-
+def find_closest_index(robot_x, robot_y,path):
+    best_i = 0
+    best_dist = 1e9
+    
+    for p in (path):
+        pi, px, py = p["i"], p["x"], p["y"]
+        d = (px - robot_x)**2 + (py - robot_y)**2  # squared distance multiplied by the point number
         if d < best_dist:
             best_dist = d
-            best_i = i
+            best_i = pi
 
     return best_i
 
-# def find_closest_index(robot_x, robot_y,path,lastPoint):
-#     best_i = 0
-#     best_dist = 1e9
-    
-#     for i, p in enumerate(path["points"]):
-#         px, py =  p["x"], p["y"]
-#         d = (px - robot_x)**2 + (py - robot_y)**2  # squared distance multiplied by the point number
-#         if d < best_dist and i >= lastPoint:  # only consider points ahead of the last point
-#             best_dist = d
-#             best_i = i
-
-#     return best_i
-
-
 def find_lookahead(robot_x, robot_y, path, start_index, L):
+    # if start_index - len(path) < 1:  
 
-    for i in range(start_index, len(path) - 1):
+    for i in range(start_index, len(path)):
 
-        x1 = path[i]["x"] - robot_x
-        y1 = path[i]["y"] - robot_y
+        px = path[i]["x"]
+        py = path[i]["y"]
 
-        x2 = path[i+1]["x"] - robot_x
-        y2 = path[i+1]["y"] - robot_y
+        dist = ((px - robot_x)**2 + (py - robot_y)**2)**0.5
 
-        dx = x2 - x1
-        dy = y2 - y1
+        if dist >= L:
+            return i, px, py
 
-        a = dx*dx + dy*dy
-        b = 2*(x1*dx + y1*dy)
-        c = x1*x1 + y1*y1 - L*L
-
-        discriminant = b*b - 4*a*c
-
-        if discriminant < 0:
-            continue
-
-        discriminant = math.sqrt(discriminant)
-
-        t1 = (-b - discriminant) / (2*a)
-        t2 = (-b + discriminant) / (2*a)
-
-        if 0 <= t1 <= 1:
-            ix = x1 + t1 * dx + robot_x
-            iy = y1 + t1 * dy + robot_y
-            return i, ix, iy
-
-        if 0 <= t2 <= 1:
-            ix = x1 + t2 * dx + robot_x
-            iy = y1 + t2 * dy + robot_y
-            return i, ix, iy
-
-    last = path[-1]
-    return len(path)-1, last["x"], last["y"]
-
-# def find_lookahead(robot_x, robot_y, path, start_index, L):
-
-#     for i in range(start_index, len(path)):
-
-#         px = path[i]["x"]
-#         py = path[i]["y"]
-
-#         dist = ((px - robot_x)**2 + (py - robot_y)**2)**0.5
-
-#         if dist >= L:
-#             return i, px, py
-
-#     # fallback
-#     last_point = path[-1]
-#     return len(path)-1, last_point["x"], last_point["y"]
-# def to_robot_frame(robot_x, robot_y, robot_theta, look_x, look_y):
-#     dx = look_x - robot_x
-#     dy = look_y - robot_y
-
-#     sin_t = math.sin(robot_theta)
-#     cos_t = math.cos(robot_theta)
-
-#     x_r =  dx * cos_t + dy * sin_t
-#     y_r = -dx * sin_t + dy * cos_t
-
-#     return x_r, y_r
+    # fallback
+    last_point = path[-1]
+    return len(path)-1, last_point["x"], last_point["y"]
+  
 def to_robot_frame(robot_x, robot_y, robot_theta, look_x, look_y):
-
+    # subtract robot position and point
     dx = look_x - robot_x
     dy = look_y - robot_y
 
-    cos_t = math.cos(robot_theta)
+    # calculate the sin and cos of robot
     sin_t = math.sin(robot_theta)
+    cos_t = math.cos(robot_theta)
 
-    x_r =  cos_t * dx + sin_t * dy
-    y_r = -sin_t * dx + cos_t * dy
+    # use the transformation to 0 radians 
+    x_r =  dx * cos_t + dy * sin_t
+    y_r = -dx * sin_t + dy * cos_t
 
     return x_r, y_r
 
 def compute_curvature(x_r, y_r):
-    # set L2 as the distance between the points
-    # by squaring both X and Y and adding them
-    L2 = x_r*x_r + y_r*y_r
+    L2 = x_r**2 + y_r**2
 
-    #if the distnace is very small, just return 0 to avoid weird values
-    # The function will return 0 for values close to 0 to avoid returning
-    # infinity (cant divide by 0)
-    if abs(L2) < 1e-6:
+    if L2 == 0:
         return 0
-    
-    # Return the values of 2y / L2
-    
+
     return 2 * y_r / L2
 
 def wheel_speeds(base_velocity, curvature, track_width):
-
-    angular_velocity = base_velocity * curvature
-
-    left  = base_velocity - angular_velocity * track_width / 2
-    right = base_velocity + angular_velocity * track_width / 2
-
+    left  = base_velocity * (1 - curvature * track_width / 2)
+    right = base_velocity * (1 + curvature * track_width / 2)
     return left, right
 
 def normalize(left, right, max_speed):
-
     m = max(abs(left), abs(right))
-
     if m > max_speed:
         scale = max_speed / m
         left *= scale
         right *= scale
-
     return left, right
-    
-    
+
 def DrivePurePursuit():
     global xpos,ypos,theta, points
+    joystick.screen.set_cursor(1,1)
+    joystick.screen.print("driving pure pursuit")
     LeftMotors.spin(FORWARD)
     RightMotors.spin(FORWARD)
     wait(20)
     pos = points
     last = points[-1]
-    lastpoint = 0
     json_str = json.dumps(pos) + "\n"
     json_bytes = bytearray(json_str, 'utf-8')
     brain.sdcard.appendfile("odomOverTime.txt", json_bytes)
 
     while(True):
-        currentPoint = find_closest_index(xpos, ypos, points, lastpoint)
+        currentPoint = find_closest_index(xpos,ypos,points)
         nextPoint = find_lookahead(xpos,ypos,points,currentPoint, L)
         centered = to_robot_frame(xpos,ypos,theta,nextPoint[1],nextPoint[2])
         computed = compute_curvature(centered[0],centered[1])
-        speeds = wheel_speeds(50,computed, O)
+        speeds = wheel_speeds(50,computed, 13.5)
         normedSpeeds = normalize(speeds[0],speeds[1],100)
-        brain.screen.new_line()
+        brain.screen.set_cursor(1,1)
         brain.screen.print(normedSpeeds)
         LeftMotors.set_velocity(normedSpeeds[0], PERCENT)
-        RightMotors.set_velocity(normedSpeeds[1], PERCENT)
+        RightMotors.set_velocity(normedSpeeds[1],PERCENT)
+        
         dist = ((xpos - last["x"])**2 + (ypos - last["y"])**2)**0.5
         if dist < 1.5:
             RightMotors.stop()
             LeftMotors.stop()
             brain.screen.print("done")
             break 
-        lastpoint = currentPoint
         
         data = {
             "xpos":xpos,
@@ -468,15 +343,33 @@ def DrivePurePursuit():
             "currentPoint":currentPoint,
             "nextPoint":nextPoint,
             "centeredPoint":centered,
-            "Curvature":computed,
+            "computedPoints":computed,
             "speeds":speeds,
             "normedSpeeds":normedSpeeds
         }
+        # brain.screen.clear_screen()
+        # brain.screen.set_cursor(1,1)
+        # brain.screen.print("xpos ", xpos, "ypos " , ypos)
+        # brain.screen.new_line()
+        # brain.screen.print("theta ",theta)
+        # brain.screen.new_line()
+        # brain.screen.print("currentPoint ",currentPoint)
+        # brain.screen.new_line()
+        # brain.screen.print("nextPoint ",nextPoint)
+        # brain.screen.new_line()
+        # brain.screen.print("centeredPoint ",centered)
+        # brain.screen.new_line()
+        # brain.screen.print("computedPoints ",computed)
+        # brain.screen.new_line()
+        # brain.screen.print("speeds ",speeds)
+        # brain.screen.new_line()
+        # brain.screen.print("normedSpeeds ",normedSpeeds)
+                                  
         json_str = json.dumps(data) + "\n"
         json_bytes = bytearray(json_str, 'utf-8')
         brain.sdcard.appendfile("odomOverTime.txt", json_bytes)
 
-        wait(20)
+        wait(10)
     LeftMotors.set_velocity(0, PERCENT)
     RightMotors.set_velocity(0,PERCENT)
 
@@ -485,6 +378,16 @@ def DrivePurePursuit():
 #######################################
 #     All Controller Functions       #
 #######################################
+def port_sensing():
+    connected = [IMU, LB, LF, LS, RB, RS, RF, odomL, odomR, intakeFrontL, intakeFrontR, intakeMiddle, intakeBackTop, intakeFrontTop]
+    
+    while(True):
+        joystick.screen.clear_line(3)
+
+        for x in connected:
+            if x.installed() != True:
+                joystick.screen.print(x )
+        wait(240)         
 
 def pincherPneumatics():
             if pincher.value():
@@ -518,7 +421,7 @@ def logThrottleCurve(inputPercent, a = 4.0):
     x = abs(x)
     curved = math.log(a * x + 1) / math.log(a + 1)  # not used, but might be helpful?
     brain.screen.set_cursor(3,10)
-    brain.screen.print(curved * sign * 100)
+    #brain.screen.print(curved * sign * 100)
     return curved * sign * 100    
 
 def controllerDrive():

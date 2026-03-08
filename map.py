@@ -10,29 +10,77 @@ field_image = pygame.image.load("field.png")
 field_image = pygame.transform.scale(field_image, (WINDOW_SIZE, WINDOW_SIZE))
 points = []
 new_points = []
+telemetry_frames = []
+frame_index = 0
 
-
-import json
 
 def load_telemetry(file_path):
-    global new_points
-    
-    with open(file_path, 'r') as f:
-        for line in f:
-            try:
-                data = json.loads(line)
-                # Map your telemetry structure to your current point structure
-                new_points.append({
-                    "i": len(new_points) + 1, 
-                    "x": data["xpos"], 
-                    "y": data["ypos"]
-                })
-            except (json.JSONDecodeError, KeyError):
-                continue # Skip malformed lines
-    
-    print(f"Loaded {len(points)} telemetry points.")
+    global telemetry_frames, new_points, frame_index
 
+    telemetry_frames = []
+    new_points = []
+    frame_index = 0
 
+    with open(file_path, "r") as f:
+        text = f.read()
+
+    text = text.replace(",]", "]")
+    telemetry_frames = json.loads(text)
+
+    for data in telemetry_frames:
+        try:
+            new_points.append({
+                "i": len(new_points) + 1,
+                "x": data["xpos"],
+                "y": data["ypos"]
+            })
+        except KeyError:
+            print("error, skipping entry")
+
+    print(f"Loaded {len(telemetry_frames)} telemetry frames.")
+      
+def draw_curvature_circle(robot_x, robot_y, theta, curvature):
+    if abs(curvature) < 1e-6:
+        return  # straight line
+
+    R = 1 / curvature
+
+    cx = robot_x - math.sin(theta) * R
+    cy = robot_y + math.cos(theta) * R
+
+    sx, sy = field_to_screen(cx, cy)
+    radius_pixels = min(abs(R) * SCALE, 5000)
+    pygame.draw.circle(screen, (255,0,255), (int(sx), int(sy)), int(radius_pixels), 1)
+    
+def draw_frame_data():
+    if not telemetry_frames:
+        return
+
+    data = telemetry_frames[frame_index]
+
+    # Robot position
+    rx, ry = field_to_screen(data["xpos"], data["ypos"])
+    pygame.draw.circle(screen, (0,255,0), (rx, ry), 6)
+
+    # Next point
+    next_pt = data["nextPoint"]
+    nx, ny = field_to_screen(next_pt[1], next_pt[2])
+    pygame.draw.circle(screen, (255,0,0), (nx, ny), 6)
+
+    # Centered point
+    cx, cy = field_to_screen((data["centeredPoint"][0]+(FIELD_SIZE/2)), (data["centeredPoint"][1]+(FIELD_SIZE/2)))
+    pygame.draw.circle(screen, (0,255,255), (cx, cy), 6)
+
+    # Draw pursuit line
+    pygame.draw.line(screen, (255,51,255), (rx, ry), (nx, ny), 2)
+    
+    draw_curvature_circle(
+    data["xpos"],
+    data["ypos"],
+    data["theta"],
+    data["computedPoints"]
+    )
+    
 def draw_path(point_list, point_color, line_color):
     for i, p in enumerate(point_list):
         sx, sy = field_to_screen(p["x"], p["y"])
@@ -107,7 +155,7 @@ def get_point_at_pos(mx, my):
 
 
 def handle_events():
-    global running, selected_index
+    global running, selected_index, frame_index
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -128,6 +176,16 @@ def handle_events():
                 points.clear()
                 new_points.clear()
                 print("Cleared points")
+            if event.key == pygame.K_RIGHT:
+                if frame_index < len(telemetry_frames) - 1:
+                    frame_index += 1
+                    print("Frame:", frame_index)
+
+            if event.key == pygame.K_LEFT:
+                if frame_index > 0:
+                    frame_index -= 1
+                    print("Frame:", frame_index)
+                    
 
         # MOUSE DOWN
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -174,7 +232,7 @@ while running:
     # Draw Telemetry Path (Yellow dots, Yellow lines)
 
     draw_path(points, (0, 0, 255), (255, 100, 100))
-
+    draw_frame_data()
 
     pygame.display.flip()
     clock.tick(60)
