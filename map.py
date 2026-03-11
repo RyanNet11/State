@@ -63,7 +63,7 @@ def draw_frame_data():
     pygame.draw.circle(screen, (0,255,0), (rx, ry), 6)
 
     # Next point
-    next_pt = data["nextPoint"]
+    next_pt = data["lookahead"]
     nx, ny = field_to_screen(next_pt[1], next_pt[2])
     pygame.draw.circle(screen, (255,0,0), (nx, ny), 6)
 
@@ -78,7 +78,7 @@ def draw_frame_data():
     data["xpos"],
     data["ypos"],
     data["theta"],
-    data["computedPoints"]
+    data["Curvature"]
     )
     
 def draw_path(point_list, point_color, line_color):
@@ -170,7 +170,7 @@ def handle_events():
                 load_points("path.json")
             
             if event.key == pygame.K_t:
-                load_telemetry("messy.json")
+                load_points("processed.json")
 
             if event.key == pygame.K_c:
                 points.clear()
