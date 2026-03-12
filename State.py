@@ -39,7 +39,9 @@ intakeBackTop= Motor(Ports.PORT4)
 intakeFrontTop= Motor(Ports.PORT20, True)
 
 LeftMotors = MotorGroup(LF, LB, LS)
+LeftMotors.set_stopping(BRAKE)
 RightMotors = MotorGroup(RF, RB, RS)
+RightMotors.set_stopping(BRAKE)
 entireIntake = MotorGroup(intakeFrontR, intakeFrontL, intakeMiddle, intakeBackTop,intakeFrontTop)
 MostOfIntake = MotorGroup(intakeFrontR, intakeFrontL, intakeMiddle, intakeBackTop)
 
@@ -71,180 +73,22 @@ while(True):
         wait(5)
     else:
         break
+IMU.set_heading(0, DEGREES)
 
 #######################################
 #          Global Variables           #
 #######################################
-xpos = 2.4
-ypos = 47.6
-theta = 0       
+xpos = 5
+ypos = 87.75
+theta = 0      
 xposT = 0   # total x pos
 yposT = 0   # total Y pos
-L = 12      # look ahead distnce
+L = 16      # look ahead distnce
 O = 13.5    # drivetrain offset (wheel base)
+currentPoint = 0
 
-points = [
-  {
-    "i": 1,
-    "x": 2.4,
-    "y": 47.6
-  },
-  {
-    "i": 2,
-    "x": 5.0,
-    "y": 47.8
-  },
-  {
-    "i": 3,
-    "x": 8.0,
-    "y": 47.8
-  },
-  {
-    "i": 4,
-    "x": 10.8,
-    "y": 47.8
-  },
-  {
-    "i": 5,
-    "x": 13.8,
-    "y": 47.8
-  },
-  {
-    "i": 6,
-    "x": 16.8,
-    "y": 47.6
-  },
-  {
-    "i": 7,
-    "x": 19.8,
-    "y": 47.6
-  },
-  {
-    "i": 8,
-    "x": 22.0,
-    "y": 47.6
-  },
-  {
-    "i": 9,
-    "x": 24.4,
-    "y": 47.8
-  },
-  {
-    "i": 10,
-    "x": 26.8,
-    "y": 48.4
-  },
-  {
-    "i": 11,
-    "x": 28.4,
-    "y": 50.8
-  },
-  {
-    "i": 12,
-    "x": 30.8,
-    "y": 53.2
-  },
-  {
-    "i": 13,
-    "x": 32.4,
-    "y": 55.4
-  },
-  {
-    "i": 14,
-    "x": 34.4,
-    "y": 57.6
-  },
-  {
-    "i": 15,
-    "x": 36.4,
-    "y": 60.4
-  },
-  {
-    "i": 16,
-    "x": 37.6,
-    "y": 62.0
-  },
-  {
-    "i": 17,
-    "x": 39.4,
-    "y": 64.4
-  },
-  {
-    "i": 18,
-    "x": 40.4,
-    "y": 66.4
-  },
-  {
-    "i": 19,
-    "x": 41.0,
-    "y": 68.4
-  },
-  {
-    "i": 20,
-    "x": 41.6,
-    "y": 70.6
-  },
-  {
-    "i": 21,
-    "x": 40.6,
-    "y": 74.8
-  },
-  {
-    "i": 22,
-    "x": 37.8,
-    "y": 76.6
-  },
-  {
-    "i": 23,
-    "x": 35.6,
-    "y": 76.8
-  },
-  {
-    "i": 24,
-    "x": 33.2,
-    "y": 76.8
-  },
-  {
-    "i": 25,
-    "x": 29.8,
-    "y": 75.6
-  },
-  {
-    "i": 26,
-    "x": 26.8,
-    "y": 74.0
-  },
-  {
-    "i": 27,
-    "x": 25.0,
-    "y": 71.6
-  },
-  {
-    "i": 28,
-    "x": 25.0,
-    "y": 68.8
-  },
-  {
-    "i": 29,
-    "x": 25.0,
-    "y": 66.6
-  },
-  {
-    "i": 30,
-    "x": 25.2,
-    "y": 64.6
-  },
-  {
-    "i": 31,
-    "x": 25.2,
-    "y": 62.0
-  },
-  {
-    "i": 32,
-    "x": 25.2,
-    "y": 60.0
-  }
-]
+
+points =  [{"i": 1, "y": 89.8, "x": 5.8}, {"i": 2, "y": 89.8, "x": 9.2}, {"i": 3, "y": 90.2, "x": 12.4}, {"i": 4, "y": 90.2, "x": 15.2}, {"i": 5, "y": 91.0, "x": 18.8}, {"i": 6, "y": 92.40001, "x": 22.8}, {"i": 7, "y": 95.0, "x": 25.4}, {"i": 8, "y": 97.2, "x": 27.4}, {"i": 9, "y": 100.0, "x": 27.6}, {"i": 10, "y": 105.4, "x": 27.6}, {"i": 11, "y": 108.8, "x": 27.2}, {"i": 12, "y": 111.8, "x": 25.8}, {"i": 13, "y": 115.4, "x": 22.8}, {"i": 14, "y": 117.2, "x": 18.4}, {"i": 15, "y": 118.0, "x": 13.2}, {"i": 16, "y": 118.4, "x": 7.6}, {"i": 17, "y": 118.8, "x": 3.0}]
 
 
 #######################################
@@ -431,14 +275,15 @@ def find_lookahead(xposi, yposi, point_1, point_2, start_index, L):
 
 #     return x_r, y_r
 def to_robot_frame(robot_x, robot_y, robot_theta, look_x, look_y):
-
+    # Change in X and Y
     dx = look_x - robot_x
     dy = look_y - robot_y
 
-    # theta = robot_theta - math.pi/4
-
+    # Take the calculation of theta 
     cos_t = math.cos(theta)
     sin_t = math.sin(theta)
+    
+    # Calculate new with rotation equasions
     x_r =  cos_t * dx - sin_t * dy
     y_r = sin_t * dx + cos_t * dy
 
@@ -481,7 +326,7 @@ def normalize(left, right, max_speed):
     
     
 def DrivePurePursuit():
-    global xpos,ypos,theta, points
+    global xpos,ypos,theta, points, currentPoint
     wait(20)
     pos = points
     last = points[-1]
@@ -516,6 +361,7 @@ def DrivePurePursuit():
           lastp = points[-1]
           look_x = lastp["x"]
           look_y = lastp["y"]
+          lookahead = lastp, look_x, look_y
       else:
           _, look_x, look_y = lookahead
       centered = to_robot_frame(xpos, ypos, theta, look_x, look_y)
@@ -527,7 +373,7 @@ def DrivePurePursuit():
       brain.screen.new_line()
       brain.screen.print(normedSpeeds)
       dist = ((xpos - last["x"])**2 + (ypos - last["y"])**2)**0.5
-      if dist < 1.5:
+      if dist < 4:
           RightMotors.stop()
           LeftMotors.stop()
           brain.screen.print("done")
@@ -552,8 +398,48 @@ def DrivePurePursuit():
     LeftMotors.set_velocity(0, PERCENT)
     RightMotors.set_velocity(0,PERCENT)
 
-      
-        
+#######################################
+#     Auton Helper Functions          #
+#######################################
+
+def drive(speed):
+    RightMotors.spin(FORWARD,speed,PERCENT)
+    LeftMotors.spin(FORWARD,speed,PERCENT)
+
+def stop():
+    RightMotors.spin(FORWARD,0,PERCENT)
+    LeftMotors.spin(FORWARD,0,PERCENT)
+
+def wiggle():
+    LeftMotors.spin(FORWARD,20,PERCENT)
+    RightMotors.spin(REVERSE,20,PERCENT)
+    wait(200)
+    LeftMotors.spin(FORWARD,-20,PERCENT)
+    RightMotors.spin(REVERSE,-50,PERCENT)
+    wait(200)
+    LeftMotors.spin(FORWARD,20,PERCENT)
+    RightMotors.spin(REVERSE,20,PERCENT)
+    wait(200)
+    LeftMotors.spin(FORWARD,-20,PERCENT)
+    RightMotors.spin(REVERSE,-20,PERCENT)
+    wait(200)
+    LeftMotors.spin(FORWARD,20,PERCENT)
+    RightMotors.spin(REVERSE,20,PERCENT)
+    wait(200)
+    LeftMotors.spin(FORWARD,-20,PERCENT)
+    RightMotors.spin(REVERSE,-20,PERCENT)
+    wait(200)
+
+    
+def intakeByPoints():
+    global currentPoint
+    rangemin = 10
+    rangemax = 15
+    while(True):
+        if (rangemin < currentPoint) and (currentPoint < rangemax):
+                MostOfIntake.spin(FORWARD, 100, PERCENT)
+        wait(5, MSEC)
+           
 #######################################
 #     All Controller Functions       #
 #######################################
@@ -622,10 +508,21 @@ def pnumaticss():
 #    Compitition functions& controls  #
 #######################################        
 def autonomous():
-    brain.screen.clear_screen()
-    brain.screen.print("autonomous code")
-    # place automonous code here
+    odom = Thread(odomTracker)
+    DrivePurePursuit()
+    pincherPneumatics()
+    MostOfIntake.spin(FORWARD,100,PERCENT)
+    wait(500)
+    wait(500)
+    wait(500)
+    pincherPneumatics()
+    MostOfIntake.spin(FORWARD,0,PERCENT)
 
+    
+    drive(-50)
+    wait(500)
+    stop()
+    
 def user_control():
     brain.screen.clear_screen()
     brain.screen.print("driver control")
@@ -634,8 +531,9 @@ def user_control():
     intake = Thread(Intake)
     odom = Thread(odomTracker)
     drive = Thread(SaveOdomToSD)
-odom = Thread(odomTracker)
-drive = Thread(DrivePurePursuit)
+autonomous()
+
+# intakeSensing = Thread(intakeByPoints)
 #comp = Competition(user_control, autonomous)
 
 # actions to do when the program starts

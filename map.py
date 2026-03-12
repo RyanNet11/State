@@ -13,7 +13,6 @@ new_points = []
 telemetry_frames = []
 frame_index = 0
 
-
 def load_telemetry(file_path):
     global telemetry_frames, new_points, frame_index
 
@@ -94,7 +93,22 @@ def draw_path(point_list, point_color, line_color):
             psx, psy = field_to_screen(prev["x"], prev["y"])
             pygame.draw.line(screen, line_color, (psx, psy), (sx, sy), 2)
             
-            
+def draw_path_numbered(point_list, point_color, line_color):
+    for i, p in enumerate(point_list):
+        sx, sy = field_to_screen(p["x"], p["y"])
+        
+        # Draw the dot
+        pygame.draw.circle(screen, point_color, (sx, sy), 3)
+
+        # Draw point number
+        label = font.render(str(p["i"]), True, (255,255,255))
+        screen.blit(label, (sx + 5, sy - 5))
+
+        # Draw the line connecting to the previous point
+        if i > 0:
+            prev = point_list[i - 1]
+            psx, psy = field_to_screen(prev["x"], prev["y"])
+            pygame.draw.line(screen, line_color, (psx, psy), (sx, sy), 2)            
 def field_to_screen(x, y):
     return int(x * SCALE), int(WINDOW_SIZE - y * SCALE)
 
@@ -105,6 +119,7 @@ pygame.init()
 
 screen = pygame.display.set_mode((WINDOW_SIZE, WINDOW_SIZE))
 clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 18)
 
 def draw_field():
     screen.blit(field_image, (0, 0))
@@ -132,7 +147,7 @@ def draw_points(points):
 
 def save_points(filename):
     with open(filename, "w") as f:
-        json.dump(points, f, indent=2)
+        json.dump(points, f, indent=None)
     print(f"Saved {len(points)} points to {filename}")
 
 
@@ -170,11 +185,13 @@ def handle_events():
                 load_points("path.json")
             
             if event.key == pygame.K_t:
-                load_points("processed.json")
+                load_telemetry("messy.json")
 
             if event.key == pygame.K_c:
                 points.clear()
                 new_points.clear()
+                telemetry_frames.clear()
+                
                 print("Cleared points")
             if event.key == pygame.K_RIGHT:
                 if frame_index < len(telemetry_frames) - 1:
@@ -231,7 +248,7 @@ while running:
     draw_path(new_points, (255, 255, 0), (255, 255, 0))
     # Draw Telemetry Path (Yellow dots, Yellow lines)
 
-    draw_path(points, (0, 0, 255), (255, 100, 100))
+    draw_path_numbered(points, (0, 0, 255), (255, 100, 100))
     draw_frame_data()
 
     pygame.display.flip()

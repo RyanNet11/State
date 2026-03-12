@@ -269,17 +269,17 @@ def find_lookahead(robot_x, robot_y, path, start_index, L):
     return len(path)-1, last_point["x"], last_point["y"]
   
 def to_robot_frame(robot_x, robot_y, robot_theta, look_x, look_y):
-    # subtract robot position and point
+
     dx = look_x - robot_x
     dy = look_y - robot_y
 
-    # calculate the sin and cos of robot
-    sin_t = math.sin(robot_theta)
-    cos_t = math.cos(robot_theta)
+    # theta = robot_theta - math.pi/4
 
-    # use the transformation to 0 radians 
-    x_r =  dx * cos_t + dy * sin_t
-    y_r = -dx * sin_t + dy * cos_t
+    cos_t = math.cos(theta)
+    sin_t = math.sin(theta)
+    
+    x_r =  cos_t * dx - sin_t * dy
+    y_r = sin_t * dx + cos_t * dy
 
     return x_r, y_r
 
@@ -330,7 +330,7 @@ def DrivePurePursuit():
         RightMotors.set_velocity(normedSpeeds[1],PERCENT)
         
         dist = ((xpos - last["x"])**2 + (ypos - last["y"])**2)**0.5
-        if dist < 1.5:
+        if dist < 4.5:
             RightMotors.stop()
             LeftMotors.stop()
             brain.screen.print("done")
