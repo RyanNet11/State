@@ -185,7 +185,7 @@ def handle_events():
                 load_points("path.json")
             
             if event.key == pygame.K_t:
-                load_telemetry("messy.json")
+                load_points("messy.json")
 
             if event.key == pygame.K_c:
                 points.clear()
@@ -248,7 +248,7 @@ while running:
     draw_path(new_points, (255, 255, 0), (255, 255, 0))
     # Draw Telemetry Path (Yellow dots, Yellow lines)
 
-    draw_path_numbered(points, (0, 0, 255), (255, 100, 100))
+    draw_path(points, (0, 0, 255), (255, 100, 100))
     draw_frame_data()
 
     pygame.display.flip()
